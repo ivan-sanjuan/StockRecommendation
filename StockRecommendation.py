@@ -6,25 +6,26 @@ from bs4 import BeautifulSoup
 from ph_scraper import scrape_and_parse
 
 stock_info = scrape_and_parse()
-print(stock_info)
-for stock in stock_info:
+
+if stock_info and len(stock_info) > 0:
     cmpy_id = stock_info[0]['cmpy_id']
     security_id = stock_info[0]['security_id']
-    
-url = f'https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={cmpy_id}&security_id={security_id}'
-response = requests.get(url)
-html_content = response.text
-soup = BeautifulSoup(html_content, 'html.parser')
-tables = soup.find_all('table', class_='view')
-stock_table = tables[1]
-stock_data = {}
+    url = f'https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={cmpy_id}&security_id={security_id}'
+    response = requests.get(url)
+    html_content = response.text
+    soup = BeautifulSoup(html_content, 'html.parser')
+    tables = soup.find_all('table', class_='view')
+    stock_table = tables[1]
+    stock_data = {}
 
-for row in stock_table.find_all('tr'):
-    cells = row.find_all("td")
-    labels = row.find_all('th')
-    for label, cell in zip(labels, cells):
-        key = label.get_text(strip=True)
-        value = cell.get_text(strip=True)
-        stock_data[key] = value
+    for row in stock_table.find_all('tr'):
+        cells = row.find_all("td")
+        labels = row.find_all('th')
+        for label, cell in zip(labels, cells):
+            key = label.get_text(strip=True)
+            value = cell.get_text(strip=True)
+            stock_data[key] = value
+    pprint.pprint(stock_data)
 
-pprint.pprint(stock_data)
+else:
+    print('No matching stock found.')
