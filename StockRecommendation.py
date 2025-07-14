@@ -1,44 +1,30 @@
+import importlib
+import ph_scraper
 import requests
+import pprint
+from bs4 import BeautifulSoup
+from ph_scraper import scrape_and_parse
 
-def country_input():
-    name = input('Enter Country here: ')
-    url = f'https://restcountries.com/v3.1/name/{name}?fullText=true'
-    response: list[dict] = requests.get(url)
-    data = response.json()
-    country_name: str = data[0]['name']['common']
-    country_cap: str = data[0]['capital'][0]
-    country_curr: str = list(data[0]['currencies'].values())[0]['name']
-    country_alt: str = data[0]['altSpellings'][1]
-    country_lock: bool = data[0]['landlocked']
-    country_area: int = data[0]['area']
-    country_maps: str = data[0]['maps']['googleMaps']
+stock_info = scrape_and_parse()
+print(stock_info)
+for stock in stock_info:
+    cmpy_id = stock_info[0]['cmpy_id']
+    security_id = stock_info[0]['security_id']
+    
+url = f'https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={cmpy_id}&security_id={security_id}'
+response = requests.get(url)
+html_content = response.text
+soup = BeautifulSoup(html_content, 'html.parser')
+tables = soup.find_all('table', class_='view')
+stock_table = tables[1]
+stock_data = {}
 
-    return country_name, country_cap, country_curr, country_alt, country_lock, country_area, country_maps
+for row in stock_table.find_all('tr'):
+    cells = row.find_all("td")
+    labels = row.find_all('th')
+    for label, cell in zip(labels, cells):
+        key = label.get_text(strip=True)
+        value = cell.get_text(strip=True)
+        stock_data[key] = value
 
-
-class Country():
-    def __init__(self, name, cap, curr, alt, lock, area, maps):
-        self.name: str = name
-        self.cap: str = cap
-        self.curr: str = curr
-        self.alt: str = alt
-        self.lock: bool = lock
-        self.area: int = area
-        self.maps: str = maps
-        
-    def __str__(self):
-                return f'''This is {self.name}.
-                The capital of {self.name} is {self.cap}.
-                The currency that they have is the {self.curr}.
-                People also refer to {self.name} as {self.alt}
-                Are they landlocked you ask? {self.lock},
-                and they have an area of around {self.area:,.2f}
-                take a look of them in {self.maps}'''
-        
-country_1_data = country_input()
-country_1 = Country(*country_1_data)
-country_2_data = country_input()
-country_2 = Country(*country_2_data)
-
-print(country_1)
-print(country_2)
+pprint.pprint(stock_data)
