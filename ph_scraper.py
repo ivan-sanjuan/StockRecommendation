@@ -1,19 +1,20 @@
 import json
+from stock_utils import input_stock
 
-def scrape_and_parse():
+with open(r'C:\Projects\StockRecommendation\stock_directory.json', 'r') as file:
+    stock_directory = json.load(file)
     
-    with open(r'C:\Projects\StockRecommendation\stock_directory.json', 'r') as file:
-        stock_directory = json.load(file)
-
-    symbol = input('Stock Symbol: ').upper()
-    result = []
-    for stock_entry in stock_directory:
-        if stock_entry.get('Symbol') == symbol:
-            cmpy_id = stock_entry.get('cmpy_id')
-            security_id = stock_entry.get('security_id')
-            result.append({
-            'cmpy_id': cmpy_id,
-            'security_id': security_id
-            })
-            break
-    return result
+    results = []
+    def scrape_and_parse(stock_code):
+        input_stock = stock_code
+        for stock_symbol in stock_directory:
+            if stock_symbol.get('stock_symbol') == input_stock:
+               cmpy_id = stock_symbol.get('cmpy_id')
+               security_id = stock_symbol.get('security_id')
+               company_name = stock_symbol.get('company_name')
+               results.append({
+                   'cmpy_id': cmpy_id,
+                   'security_id': security_id,
+                   'company_name': company_name
+               })
+        return results
