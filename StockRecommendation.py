@@ -1,51 +1,41 @@
-import requests
-from bs4 import BeautifulSoup
-from ph_scraper import scrape_and_parse
-from stock_utils import input_stock
+from ph_stock_scraper import scrape_and_parse
+from pse_fundamentals_scraper import search_fundamentals_data
+from pse_basic_scraper import search_basic_data
+import json
 
-stock_code = input_stock()
-stock_info = scrape_and_parse(stock_code)
 
-if  stock_info and len(stock_info) > 0:
-    cmpy_id = stock_info[0]['cmpy_id']
-    security_id = stock_info[0]['security_id']
-    company_name = stock_info[0]['company_name']
-    url = f'https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={cmpy_id}&security_id={security_id}'
-    response = requests.get(url)
-    html_content = response.text
-
-    soup = BeautifulSoup(html_content, 'html.parser')
-    tables = soup.find_all('table', class_='view')
-    stock_table = tables[1]
-    stock_code = {}
-
-    for row in stock_table.find_all('tr'):
-        cells = row.find_all("td")
-        labels = row.find_all('th')
-        for label, cell in zip(labels, cells):
-            key = label.get_text(strip=True)
-            value = cell.get_text(strip=True)
-            stock_code[key] = value
-
-else:
-    print('No matching stock found.')
     
+raw_input_data = 'AC'
+
+basic_data = search_basic_data(raw_input_data)
+financial_data = search_fundamentals_data(raw_input_data)
+stock_directory = scrape_and_parse(raw_input_data)
 
 class Stock():
-    def __init__(self,stock_info,stock_code):
-        self.name = stock_info[0]['company_name']
-        self.open = stock_code.get('Open', 'N/A')
-        self.close = stock_code.get('Last Traded Price', 'N/A')
-
+    def __init__(self,basic_data,financial_data,stock_directory):
+        self.name = stock_directory[0]['company_name']
+        self.last = basic_data.get('Last Traded Price')
+        self.open = basic_data.get('Open')
+        self.close = basic_data.get('Previous Close and Date')
+        self.high = basic_data.get('High')
+        self.low = basic_data.get('Low')
+        self.week_high = basic_data.get('52-Week High')
+        self.week_low = basic_data.get('52-Week Low')
+        
     def __str__(self):
         return f'''
         Company: {self.name}
+        Last Traded Price: {self.last}
         Open: {self.open}
         Close: {self.close}
+        High: {self.high}
+        Low: {self.low}
+        52-Week High: {self.week_high}
+        52-Week Low: {self.week_low}
         '''
 
-company_1_data = (stock_info, stock_code)
-company_1 = Stock(*company_1_data)
+company_data = (basic_data,financial_data,stock_directory)
+company = Stock(*company_data)
 
-print(company_1)
+print(company)
 
